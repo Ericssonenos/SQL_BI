@@ -1,3 +1,4 @@
+
 SELECT DISTINCT REENTREGAS.* FROM
 			(
 				select 
@@ -6,15 +7,19 @@ SELECT DISTINCT REENTREGAS.* FROM
 					,cte.PREVISAO_ENTREGA
 					,CTE.FRETE
 					, COUNT(CTE.NUM_DOC) AS SAIDAS
+					, COUNT(CTE.NUM_DOC) -1 as Saida_DESP
 					, COUNT(CTE.NUM_DOC) -1 as REENTREGAS
 					, max(DT_EMISS_ROM_ENT) Ultima_entrega
+					,AVG(cte.cont_cliente) as Ocors_Cliente
+					,avg(CTE.cont_Operacional) as Ocors_Operacional
+					, (COUNT(CTE.NUM_DOC) -1) * CTE.FRETE as FRETE_DESP
 					,'Nao' as ecomerce
 				from 
 				(
-						SELECT DISTINCT  DMC02.SIGLA_FIL, DMC02.NR_ENTRADA, DMC02.NUM_DOC, DRECE3.DT_EMISS_ROM_ENT ,  VCC.PLACA_PRINCIPAL, VCC.NOME_MOT , vcc.FIL_CONTRATO, DMC02.PREVISAO_ENTREGA, dbo.fn_ret_notas_cte(DMC02.NR_ENTRADA, DMC02.SIGLA_FIL) AS NOTA_AGRUP,FRETE  FROM   tb_dados_movimento_custo_emis  AS DMC02  with(nolock) 
+						SELECT DISTINCT  DMC02.SIGLA_FIL, DMC02.NR_ENTRADA, DMC02.NUM_DOC, DRECE3.DT_EMISS_ROM_ENT ,  VCC.PLACA_PRINCIPAL, VCC.NOME_MOT , vcc.FIL_CONTRATO, DMC02.PREVISAO_ENTREGA, dbo.fn_ret_notas_cte(DMC02.NR_ENTRADA, DMC02.SIGLA_FIL) AS NOTA_AGRUP,FRETE, cont_cliente ,cont_Operacional  FROM   tb_dados_movimento_custo_emis  AS DMC02  with(nolock) 
 							INNER JOIN 
-								(SELECT DISTINCT SO01.NR_ENTRADA, SO01.SIGLA_FIL FROM tb_solid_ocorrencias AS SO01  with(nolock)
-														WHERE SO01.FALHA_CLIENTE = 'S' AND SO01.CODIGO_OCOR <> 100
+								(SELECT DISTINCT SO01.NR_ENTRADA, SO01.SIGLA_FIL, count(case when SO01.FALHA_CLIENTE = 'S' then 1 else null end) as cont_cliente, count(case when SO01.FALHA_OPERACIONAL = 'S' then 1 else null end) as cont_Operacional     FROM tb_solid_ocorrencias AS SO01  with(nolock)
+														group by  SO01.NR_ENTRADA, SO01.SIGLA_FIL
 														
 								) AS SO03 
 							ON DMC02.NR_ENTRADA = SO03.NR_ENTRADA AND DMC02.SIGLA_FIL = SO03.SIGLA_FIL
@@ -26,8 +31,6 @@ SELECT DISTINCT REENTREGAS.* FROM
 							(SELECT DISTINCT  PLACA_PRINCIPAL, FIL_CONTRATO ,NUM_CONTRATO , NOME_MOT ,VALOR_CONTRATO  FROM Tb_valores_contrato_custo  with(nolock)) AS VCC
 							ON DRECE3.NUM_CONTRATO  = VCC.NUM_CONTRATO AND DRECE3.FIL_CONTRATO = VCC.FIL_CONTRATO
 							WHERE
-							DMC02.DT_EMISSAO > '20200801'
-							and
 							DMC02.CONSIGNATARIO in(
 							'FRIOVIX COM REFRIGERACAO LTDA', 
 							'FAST SHOP SA', 
@@ -86,7 +89,7 @@ SELECT DISTINCT REENTREGAS.* FROM
 					,CTE.NUM_DOC
 					,cte.PREVISAO_ENTREGA
 					,CTE.FRETE
-				having  COUNT(CTE.NUM_DOC) > 1 and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-42,GETDATE())
+				having  COUNT(CTE.NUM_DOC) > 1 and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-120,GETDATE())
 			) AS REENTREGAS
 
 union all
@@ -99,15 +102,19 @@ SELECT DISTINCT REENTREGAS.* FROM
 					,cte.PREVISAO_ENTREGA
 					,CTE.FRETE
 					, COUNT(CTE.NUM_DOC) AS SAIDAS
-					, COUNT(CTE.NUM_DOC) -3 as REENTREGAS
+					, COUNT(CTE.NUM_DOC) -3 as Saida_DESP
+					, COUNT(CTE.NUM_DOC) -1 as REENTREGAS
 					, max(DT_EMISS_ROM_ENT) Ultima_entrega
+					,AVG(cte.cont_cliente) as Ocors_Cliente
+					,avg(CTE.cont_Operacional) as Ocors_Operacional
+					,(COUNT(CTE.NUM_DOC) -3) * CTE.FRETE as FRETE_DESP
 					,'Sim' as ecomerce
 				from  
 				(
-						SELECT DISTINCT  DMC02.SIGLA_FIL, DMC02.NR_ENTRADA, DMC02.NUM_DOC, DRECE3.DT_EMISS_ROM_ENT ,  VCC.PLACA_PRINCIPAL, VCC.NOME_MOT , vcc.FIL_CONTRATO, DMC02.PREVISAO_ENTREGA,dbo.fn_ret_notas_cte(DMC02.NR_ENTRADA, DMC02.SIGLA_FIL) AS NOTA_AGRUP ,FRETE  FROM   tb_dados_movimento_custo_emis  AS DMC02  with(nolock) 
+						SELECT DISTINCT  DMC02.SIGLA_FIL, DMC02.NR_ENTRADA, DMC02.NUM_DOC, DRECE3.DT_EMISS_ROM_ENT ,  VCC.PLACA_PRINCIPAL, VCC.NOME_MOT , vcc.FIL_CONTRATO, DMC02.PREVISAO_ENTREGA, dbo.fn_ret_notas_cte(DMC02.NR_ENTRADA, DMC02.SIGLA_FIL) AS NOTA_AGRUP,FRETE, cont_cliente ,cont_Operacional  FROM   tb_dados_movimento_custo_emis  AS DMC02  with(nolock) 
 							INNER JOIN 
-								(SELECT DISTINCT SO01.NR_ENTRADA, SO01.SIGLA_FIL FROM tb_solid_ocorrencias AS SO01  with(nolock)
-														WHERE SO01.FALHA_CLIENTE = 'S' AND SO01.CODIGO_OCOR <> 100
+								(SELECT DISTINCT SO01.NR_ENTRADA, SO01.SIGLA_FIL, count(case when SO01.FALHA_CLIENTE = 'S' then 1 else null end) as cont_cliente, count(case when SO01.FALHA_OPERACIONAL = 'S' then 1 else null end) as cont_Operacional     FROM tb_solid_ocorrencias AS SO01  with(nolock)
+														group by  SO01.NR_ENTRADA, SO01.SIGLA_FIL
 														
 								) AS SO03 
 							ON DMC02.NR_ENTRADA = SO03.NR_ENTRADA AND DMC02.SIGLA_FIL = SO03.SIGLA_FIL
@@ -119,8 +126,6 @@ SELECT DISTINCT REENTREGAS.* FROM
 							(SELECT DISTINCT  PLACA_PRINCIPAL, FIL_CONTRATO ,NUM_CONTRATO , NOME_MOT ,VALOR_CONTRATO  FROM Tb_valores_contrato_custo  with(nolock)) AS VCC
 							ON DRECE3.NUM_CONTRATO  = VCC.NUM_CONTRATO AND DRECE3.FIL_CONTRATO = VCC.FIL_CONTRATO
 							WHERE
-							DMC02.DT_EMISSAO > '20200801'
-							and
 							DMC02.CONSIGNATARIO not in(
 							'FRIOVIX COM REFRIGERACAO LTDA', 
 							'FAST SHOP SA', 
@@ -176,9 +181,9 @@ SELECT DISTINCT REENTREGAS.* FROM
 					,CTE.NUM_DOC
 					,cte.PREVISAO_ENTREGA
 					,CTE.FRETE
-				having  COUNT(CTE.NUM_DOC) > 3 and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-42,GETDATE())
+				having  COUNT(CTE.NUM_DOC) > 3 and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-120,GETDATE())
 			) AS REENTREGAS
 			
 	
 
-			
+			 

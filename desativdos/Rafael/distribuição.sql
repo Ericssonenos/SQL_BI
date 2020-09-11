@@ -1,0 +1,1 @@
+SELECT * FROM tb_valores_contrato_custo where cast(DT_EMIS_CONTRATO as date)  >= '20190101'

@@ -2,6 +2,7 @@
        SELECT DISTINCT REENTREGAS.*
 	   , SAIDAS -(CASE WHEN REENTREGAS.ecomerce = 'SIM'THEN 3 ELSE 1 END) as Saida_DESP
 	   ,(SAIDAS -(CASE WHEN REENTREGAS.ecomerce = 'SIM'THEN 3 ELSE 1 END)) * REENTREGAS.FRETE as FRETE_DESP
+	   ,getdate() as ATUALIZACAO_PAINEL
 	   FROM
 			(
 				select 
@@ -98,7 +99,7 @@
 					,cte.PREVISAO_ENTREGA
 					,CTE.FRETE
 					,cte.ecomerce
-					having  COUNT(CTE.NUM_DOC) > (CASE WHEN ecomerce = 'SIM'THEN 3 ELSE 1 END) and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-5,GETDATE())
+					having  COUNT(CTE.NUM_DOC) > (CASE WHEN ecomerce = 'SIM'THEN 3 ELSE 1 END) and  max(DT_EMISS_ROM_ENT) > DATEADD(DD,-10,GETDATE())
 			) AS REENTREGAS
 
 
